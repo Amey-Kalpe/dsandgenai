@@ -97,6 +97,7 @@ def retriever_agent(state: AgentState) -> AgentState:
             print(f"Tool {t['name']} does not exist.")
             result = f" Incorrect Tool! {t['name']} does not exist. Please retry and select a valid tool."
         
+        # IMPIRTANT: We need to return a ToolMessage with the tool call ID, name, and content
         results.append(ToolMessage(tool_call_id=t['id'], name=t['name'], content=str(result)))
     
     print("Tool execution completed. Returning results to the LLM.")
