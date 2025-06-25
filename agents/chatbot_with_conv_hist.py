@@ -2,6 +2,9 @@ from langchain_core.messages import HumanMessage, AIMessage
 from langgraph.graph import StateGraph, START, END
 from langchain_openai import ChatOpenAI
 from typing import TypedDict, List, Union
+from langgraph.checkpoint.memory import MemorySaver
+
+memory = MemorySaver()
 
 class AgentState(TypedDict):
     messages: List[Union[HumanMessage, AIMessage]]
@@ -22,9 +25,13 @@ graph = StateGraph(AgentState)
 graph.add_node("process", process)
 graph.add_edge(START, "process")
 graph.add_edge("process", END)
-app = graph.compile()
+# Add memory checkpointer when compiling the graph
+app = graph.compile(checkpointer=memory)
 
 conversation_history = []
+
+# Create a config with user thread
+config = {"configurable": {"thread_id": "1"}}
 
 while True:
     user_input = input("You: ")
@@ -34,8 +41,8 @@ while True:
     # Create a new state with the user's message
     state = AgentState(messages=conversation_history + [HumanMessage(content=user_input)])
     
-    # Run the graph with the current state
-    state = app.invoke(state)
+    # Run the graph with the current state, and add the config for the user
+    state = app.invoke(state, config=config)
     
     # Update conversation history
     conversation_history = state["messages"]
