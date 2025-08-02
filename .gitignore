@@ -173,3 +173,5 @@ cython_debug/
 */chroma_db
 
 *.lock
+
+*.db
