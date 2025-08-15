@@ -18,7 +18,8 @@ from .tools import music_tools
 from agent_state import State
 from .node import music_assistant, should_continue as ma_should_continue
 from langsmith import utils
-from graph import checkpointer, in_memory_store
+from memory.long_term_mem import in_memory_store
+from memory.short_term_mem import checkpointer
 
 
 music_tool_node = ToolNode(music_tools)
@@ -54,9 +55,7 @@ music_workflow.add_edge("music_tool_node", "music_assistant")
 
 # Compile the graph with checkpointer for short-term memory and store for long-term memory
 music_catalog_subagent = music_workflow.compile(
-    name="music_catalog_subagent", 
-    checkpointer=checkpointer, 
-    store=in_memory_store
+    name="music_catalog_subagent", checkpointer=checkpointer, store=in_memory_store
 )
 
 
