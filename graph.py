@@ -1,13 +1,35 @@
 import os
-from langgraph.checkpoint.memory import MemorySaver  # Short-term Memory
-from langgraph.store.memory import InMemoryStore  # Long-term Memory
+from langgraph.graph import StateGraph, START, END
+from agents.supervisor.agent import supervisor_prebuilt
+from agents.verification.node.verify_info import verify_info, should_interrupt
+from agents.verification.node.human_input import human_input
+from memory.long_term_mem import in_memory_store
+from memory.short_term_mem import checkpointer
+from agent_state import State
 
 os.environ["LANGSMITH_TRACING"] = "true"  # Enables LangSmith tracing
-os.environ["LANGSMITH_PROJECT"] = "langgraph-multi-agent"  # Project name for organizing LangSmith traces
+os.environ["LANGSMITH_PROJECT"] = (
+    "langgraph-multi-agent"  # Project name for organizing LangSmith traces
+)
 
-# Initialize long-term memory store for persistent data between conversations
-in_memory_store = InMemoryStore()
 
-# Initialize checkpointer for short-term memory within a single thread/conversation
-checkpointer = MemorySaver()
+multi_agent_verify = StateGraph(State)
 
+multi_agent_verify.add_node("verify_info", verify_info)
+multi_agent_verify.add_node("human_input", human_input)
+multi_agent_verify.add_node("supervisor", supervisor_prebuilt)
+
+multi_agent_verify.add_edge(START, "verify_info")
+multi_agent_verify.add_conditional_edges(
+    "verify_info",
+    should_interrupt,
+    {"continue": "supervisor", "interrupt": "human_input"},
+)
+
+multi_agent_verify.add_edge("human_input", "verify_info")
+multi_agent_verify.add_edge("supervisor", END)
+
+
+multi_agent_verify_graph = multi_agent_verify.compile(
+    name="multi_agent_verify", checkpointer=checkpointer, store=in_memory_store
+)
