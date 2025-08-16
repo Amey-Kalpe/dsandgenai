@@ -3,8 +3,8 @@ from langgraph_supervisor import create_supervisor
 from agents.music_assistant.agent import music_catalog_subagent
 from agents.invoice_assistant.agent import invoice_information_subagent
 from agents.supervisor.prompts import supervisor_prompt
-from memory.long_term_mem import in_memory_store
-from memory.short_term_mem import checkpointer
+from memory import in_memory_store
+from memory import checkpointer
 from agent_state import State
 
 llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.3)

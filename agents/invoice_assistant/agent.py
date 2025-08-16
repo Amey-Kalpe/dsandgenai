@@ -22,8 +22,8 @@ from langchain_openai import ChatOpenAI
 from agent_state import State
 from .tools import invoice_tools
 from .prompts import invoice_subagent_prompt
-from memory.long_term_mem import in_memory_store
-from memory.short_term_mem import checkpointer
+from memory import in_memory_store
+from memory import checkpointer
 
 llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.3)
 

@@ -18,8 +18,8 @@ from .tools import music_tools
 from agent_state import State
 from .node import music_assistant, should_continue as ma_should_continue
 from langsmith import utils
-from memory.long_term_mem import in_memory_store
-from memory.short_term_mem import checkpointer
+from memory import in_memory_store
+from memory import checkpointer
 
 
 music_tool_node = ToolNode(music_tools)
