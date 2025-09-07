@@ -15,8 +15,17 @@ from langchain_core.messages import BaseMessage, ToolMessage, SystemMessage
 from langgraph.graph import StateGraph
 from langgraph.runtime import Runtime
 from langgraph.prebuilt import ToolNode
+from langgraph.types import interrupt
+from langgraph.store.memory import InMemoryStore  # Long-term Memory
+from langgraph.checkpoint.memory import MemorySaver  # Short-term Memory
 from langchain_openai import ChatOpenAI
-from src.agent.tools import tools
+from agent.tools import tools
+
+# Initialize long-term memory store for persistent data between conversations
+in_memory_store = InMemoryStore()
+
+# Initialize checkpointer for short-term memory within a single thread/conversation
+checkpointer = MemorySaver()
 
 llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.3).bind_tools(tools)
 
@@ -50,6 +59,24 @@ def call_model(state: State, runtime: Runtime[Context]) -> Dict[str, Any]:
         content="You are my AI assistant. Answer my questions to the best of your ability. If you don't know the answer, say 'I don't know'."
     )
     response = llm.invoke([system_message] + state["messages"])
+    if response.type == "ai" and response.additional_kwargs.get("tool_calls", None):
+        print(f"{response.type=}")
+        print(response.additional_kwargs.get("tool_calls", None))
+        for tc in response.tool_calls:
+            # Pause execution until human approves
+            _ = interrupt(
+                {
+                    "awaiting_user_approval": True,
+                    "tool_name": tc["name"],
+                    "tool_args": tc.get("args", {}),
+                }
+            )
+        # _ = interrupt(
+        #     {
+        #         "awaiting": response.tool_calls[0]["name"],
+        #         "args": response.tool_calls[0].get("args", {}),
+        #     }
+        # )
     return {"messages": [response]}
     # return {
     #     "changeme": "output from call_model. "
@@ -80,5 +107,5 @@ graph = (
         },
     )
     .add_edge("tool_node", "call_model")
-    .compile(name="React Agent")
+    .compile(name="React Agent", checkpointer=checkpointer, store=in_memory_store)
 )
