@@ -19,6 +19,7 @@ def get_calculator_response(query: str, ctx: Context) -> str:
 
     result = graph.invoke({"messages": [HumanMessage(content=query)]}, config=config)
     if result.get("__interrupt__", None):
+        print(result)
         return json.dumps(result["__interrupt__"][0].value)
     return result["messages"][-1].content
 
@@ -30,6 +31,9 @@ def resume_execution(query: str, ctx: Context) -> str:
     # question = "How much was my most recent purchase?"
     config = {"configurable": {"thread_id": thread_id}}
     result = graph.invoke(Command(resume=query), config=config)
+    if result.get("__interrupt__", None):
+        print(result)
+        return json.dumps(result["__interrupt__"][0].value)
     return result["messages"][-1].content
 
 
